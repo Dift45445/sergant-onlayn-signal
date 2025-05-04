@@ -5,16 +5,18 @@ import { Incident, IncidentStatus, IncidentType, Priority } from '@/types/incide
 import { webSocketService, getInitialIncidents, CrewType, IncidentWithCrew } from '@/services/incidentService';
 import IncidentCard from '@/components/incidents/IncidentCard';
 import { Button } from '@/components/ui/button';
-import { Bell, BellOff, FileText, Plus } from 'lucide-react';
+import { Bell, BellOff, Plus } from 'lucide-react';
 import IncidentDetails from '@/components/incidents/IncidentDetails';
 import CreateIncidentDialog from '@/components/incidents/CreateIncidentDialog';
 import UserInfo from '@/components/user/UserInfo';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Incidents: React.FC = () => {
   const [incidents, setIncidents] = useState<IncidentWithCrew[]>([]);
   const [connected, setConnected] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<IncidentWithCrew | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     // Load initial incidents
@@ -99,52 +101,43 @@ const Incidents: React.FC = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-4">
         <div>
           <h1 className="text-2xl font-bold">Инциденты</h1>
-          <p className="text-muted-foreground">Мониторинг происшествий в реальном времени</p>
+          <p className="text-muted-foreground">Назначенные вызовы</p>
         </div>
         <div className="flex items-center gap-2">
           <UserInfo />
           <Button 
             onClick={toggleConnection}
             variant={connected ? "default" : "outline"}
+            size={isMobile ? "icon" : "default"}
             className="flex items-center gap-2"
           >
             {connected ? (
               <>
                 <Bell className="h-4 w-4" />
-                Онлайн
+                {!isMobile && <span>Онлайн</span>}
               </>
             ) : (
               <>
                 <BellOff className="h-4 w-4" />
-                Офлайн
+                {!isMobile && <span>Офлайн</span>}
               </>
             )}
           </Button>
         </div>
       </div>
       
-      <div className="flex justify-between items-center mb-4">
-        <Button 
-          onClick={() => setIsCreateDialogOpen(true)}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Создать вызов
-        </Button>
-        <Button 
-          variant="outline" 
-          onClick={() => window.location.href = '/analytics'}
-          className="flex items-center gap-2"
-        >
-          <FileText className="h-4 w-4" />
-          Дневная аналитика
-        </Button>
-      </div>
+      <Button 
+        onClick={() => setIsCreateDialogOpen(true)}
+        className="w-full mb-4 flex items-center justify-center gap-2"
+      >
+        <Plus className="h-4 w-4" />
+        Создать вызов
+      </Button>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className={isMobile ? "grid grid-cols-1 gap-4" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"}>
         {activeIncidents.length > 0 ? (
           activeIncidents.map(incident => (
             <IncidentCard 
@@ -166,6 +159,7 @@ const Incidents: React.FC = () => {
           incident={selectedIncident} 
           onClose={() => setSelectedIncident(null)} 
           onStatusChange={handleStatusChange}
+          isMobile={isMobile}
         />
       )}
       

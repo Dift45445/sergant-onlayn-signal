@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Message {
   id: string;
@@ -39,6 +40,15 @@ const Chat: React.FC = () => {
       isMe: false
     }
   ]);
+  const isMobile = useIsMobile();
+  const messageEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Scroll to bottom when messages change
+    if (messageEndRef.current) {
+      messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
 
   const handleSendMessage = () => {
     if (newMessage.trim()) {
@@ -73,14 +83,14 @@ const Chat: React.FC = () => {
 
   return (
     <div>
-      <div className="mb-6">
+      <div className="mb-4">
         <h1 className="text-2xl font-bold">Чат</h1>
         <p className="text-muted-foreground">Общение с диспетчерской службой</p>
       </div>
       
       <Card className="mb-4">
         <CardContent className="p-0">
-          <div className="h-[500px] flex flex-col">
+          <div className={`${isMobile ? 'h-[calc(100vh-200px)]' : 'h-[500px]'} flex flex-col`}>
             <div className="bg-police-blue text-white p-4 flex items-center">
               <Avatar className="h-10 w-10 mr-3">
                 <AvatarImage src="" />
@@ -115,6 +125,7 @@ const Chat: React.FC = () => {
                   </div>
                 </div>
               ))}
+              <div ref={messageEndRef} />
             </div>
             
             <div className="p-4 border-t">
