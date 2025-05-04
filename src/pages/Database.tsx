@@ -1,18 +1,80 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Search, FileText, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+interface PersonRecord {
+  id: string;
+  name: string;
+  dateOfBirth: string;
+  address: string;
+  status: string;
+  passport?: string;
+  phone?: string;
+}
 
 const Database: React.FC = () => {
-  const sampleData = [
-    { id: 'rec1', name: 'Иванов Иван Иванович', dateOfBirth: '15.05.1985', address: 'ул. Ленина, 45', status: 'В розыске' },
-    { id: 'rec2', name: 'Петров Петр Петрович', dateOfBirth: '22.10.1990', address: 'пр. Гагарина, 12', status: 'Под наблюдением' },
-    { id: 'rec3', name: 'Сидорова Анна Васильевна', dateOfBirth: '03.02.1978', address: 'ул. Пушкина, 78', status: 'Закрыто' },
-    { id: 'rec4', name: 'Козлов Александр Николаевич', dateOfBirth: '11.12.1982', address: 'ул. Мира, 34', status: 'Активно' },
+  const [searchType, setSearchType] = useState<'name' | 'passport' | 'phone'>('name');
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const sampleData: PersonRecord[] = [
+    { 
+      id: 'rec1', 
+      name: 'Иванов Иван Иванович', 
+      dateOfBirth: '15.05.1985', 
+      address: 'ул. Ленина, 45', 
+      status: 'В розыске',
+      passport: '4515 123456',
+      phone: '+79128765432'
+    },
+    { 
+      id: 'rec2', 
+      name: 'Петров Петр Петрович', 
+      dateOfBirth: '22.10.1990', 
+      address: 'пр. Гагарина, 12', 
+      status: 'Под наблюдением',
+      passport: '4601 789012',
+      phone: '+79223456789'
+    },
+    { 
+      id: 'rec3', 
+      name: 'Сидорова Анна Васильевна', 
+      dateOfBirth: '03.02.1978', 
+      address: 'ул. Пушкина, 78', 
+      status: 'Закрыто',
+      passport: '4511 345678',
+      phone: '+79034567890'
+    },
+    { 
+      id: 'rec4', 
+      name: 'Козлов Александр Николаевич', 
+      dateOfBirth: '11.12.1982', 
+      address: 'ул. Мира, 34', 
+      status: 'Активно',
+      passport: '4602 234567',
+      phone: '+79112345678'
+    },
   ];
+
+  const filteredData = sampleData.filter(record => {
+    const query = searchQuery.toLowerCase();
+    if (!query) return true;
+    
+    switch (searchType) {
+      case 'name':
+        return record.name.toLowerCase().includes(query);
+      case 'passport':
+        return record.passport?.toLowerCase().includes(query);
+      case 'phone':
+        return record.phone?.toLowerCase().includes(query);
+      default:
+        return true;
+    }
+  });
 
   return (
     <div>
@@ -53,15 +115,33 @@ const Database: React.FC = () => {
         </Card>
       </div>
 
-      <div className="flex justify-between items-center mb-4">
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input 
-            placeholder="Поиск в базе данных" 
-            className="pl-8"
-          />
+      <div className="flex flex-wrap gap-2 items-center mb-4">
+        <div className="flex-1 flex items-center gap-2 min-w-[300px]">
+          <Select 
+            value={searchType} 
+            onValueChange={(value) => setSearchType(value as 'name' | 'passport' | 'phone')}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Тип поиска" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name">ФИО</SelectItem>
+              <SelectItem value="passport">Номер паспорта</SelectItem>
+              <SelectItem value="phone">Номер телефона</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <div className="relative flex-1">
+            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input 
+              placeholder="Поиск в базе данных" 
+              className="pl-8"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
-        <Button className="ml-2">
+        <Button>
           <Plus className="h-4 w-4 mr-1" /> Новая запись
         </Button>
       </div>
@@ -79,7 +159,7 @@ const Database: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sampleData.map((record) => (
+              {filteredData.map((record) => (
                 <TableRow key={record.id}>
                   <TableCell className="font-medium">{record.name}</TableCell>
                   <TableCell>{record.dateOfBirth}</TableCell>

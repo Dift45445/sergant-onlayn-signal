@@ -9,6 +9,7 @@ import Incidents from "./pages/Incidents";
 import Archive from "./pages/Archive";
 import Database from "./pages/Database";
 import Chat from "./pages/Chat";
+import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/archive" element={<Archive />} />
             <Route path="/database" element={<Database />} />
             <Route path="/chat" element={<Chat />} />
+            <Route path="/analytics" element={<Analytics />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>

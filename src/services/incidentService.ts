@@ -35,7 +35,7 @@ class WebSocketService {
   }
 
   private startMockIncidents() {
-    // Generate random incidents every 10-20 seconds
+    // Generate random incidents every 30-60 seconds (reduced frequency)
     const generateIncident = () => {
       const incident = this.createRandomIncident();
       console.log("New incident received", incident);
@@ -44,13 +44,13 @@ class WebSocketService {
       });
       this.notifyListeners(incident);
 
-      // Schedule next incident
-      const nextTime = 10000 + Math.random() * 10000;
+      // Schedule next incident with reduced frequency
+      const nextTime = 30000 + Math.random() * 30000;
       setTimeout(generateIncident, nextTime);
     };
 
-    // Initial incident after 3 seconds
-    setTimeout(generateIncident, 3000);
+    // Initial incident after 5 seconds
+    setTimeout(generateIncident, 5000);
   }
 
   private createRandomIncident(): Incident {
@@ -97,13 +97,26 @@ class WebSocketService {
       }
     };
   }
+
+  // Add new incident manually
+  addIncident(incident: Incident) {
+    this.notifyListeners(incident);
+    return incident;
+  }
+}
+
+export type CrewType = "АП-1" | "АП-2" | "АП-3" | "ППС-101" | "ППС-102" | "ППС-103";
+
+export interface IncidentWithCrew extends Incident {
+  assignedCrew?: CrewType;
+  report?: string;
 }
 
 // Create singleton instance
 export const webSocketService = new WebSocketService();
 
 // Sample incidents for initial display
-export const getInitialIncidents = (): Incident[] => {
+export const getInitialIncidents = (): IncidentWithCrew[] => {
   return [
     {
       id: "inc-001",
@@ -113,6 +126,7 @@ export const getInitialIncidents = (): Incident[] => {
       priority: Priority.HIGH,
       timestamp: new Date(Date.now() - 1000*60*15).toISOString(),
       status: IncidentStatus.IN_PROGRESS,
+      assignedCrew: "АП-1",
       caller: {
         name: "Петров В.А.",
         phone: "+79123456789"
@@ -134,7 +148,7 @@ export const getInitialIncidents = (): Incident[] => {
   ];
 };
 
-export const getArchivedIncidents = (): Incident[] => {
+export const getArchivedIncidents = (): IncidentWithCrew[] => {
   return [
     {
       id: "arc-001",
@@ -143,7 +157,9 @@ export const getArchivedIncidents = (): Incident[] => {
       description: "Группа молодых людей нарушает общественный порядок",
       priority: Priority.LOW,
       timestamp: new Date(Date.now() - 1000*60*60*24*2).toISOString(),
-      status: IncidentStatus.ARCHIVED
+      status: IncidentStatus.ARCHIVED,
+      assignedCrew: "ППС-101",
+      report: "Прибыли на место в 22:15. Выявлена группа подростков (5 человек), распивающих алкоголь. Проведена профилактическая беседа. Личности установлены, составлены протоколы об административном правонарушении."
     },
     {
       id: "arc-002",
@@ -152,7 +168,9 @@ export const getArchivedIncidents = (): Incident[] => {
       description: "Пожилому человеку стало плохо на улице",
       priority: Priority.MEDIUM,
       timestamp: new Date(Date.now() - 1000*60*60*24*3).toISOString(),
-      status: IncidentStatus.ARCHIVED
+      status: IncidentStatus.ARCHIVED,
+      assignedCrew: "АП-2",
+      report: "По прибытии обнаружен гражданин Смирнов А.П. с признаками сердечного приступа. Вызвана скорая помощь. Пострадавший передан медикам в 15:40."
     },
     {
       id: "arc-003",
@@ -161,7 +179,47 @@ export const getArchivedIncidents = (): Incident[] => {
       description: "Драка между посетителями",
       priority: Priority.HIGH,
       timestamp: new Date(Date.now() - 1000*60*60*24*4).toISOString(),
-      status: IncidentStatus.ARCHIVED
+      status: IncidentStatus.ARCHIVED,
+      assignedCrew: "ППС-103",
+      report: "Конфликт между двумя группами посетителей клуба. Задержаны зачинщики: Котов И.С. и Марков Д.А. Составлены протоколы о нарушении общественного порядка. Пострадавшим оказана первая помощь."
     }
   ];
+};
+
+export const generateIncidentStats = () => {
+  const currentMonth = new Date().getMonth();
+  const monthNames = [
+    "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+    "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+  ];
+
+  const lastSixMonths = Array.from({length: 6}, (_, i) => {
+    const monthIndex = (currentMonth - i + 12) % 12;
+    return monthNames[monthIndex];
+  }).reverse();
+
+  // Generate data by incident type
+  const incidentTypes = Object.values(IncidentType);
+  const typesData = incidentTypes.map(type => {
+    return {
+      name: type,
+      data: Array.from({length: 6}, () => Math.floor(Math.random() * 30 + 5))
+    };
+  });
+
+  // Generate priority distribution
+  const priorityData = [
+    { name: Priority.HIGH, value: Math.floor(Math.random() * 50 + 20) },
+    { name: Priority.MEDIUM, value: Math.floor(Math.random() * 80 + 40) },
+    { name: Priority.LOW, value: Math.floor(Math.random() * 60 + 30) }
+  ];
+
+  return {
+    months: lastSixMonths,
+    incidentsByType: typesData,
+    priorityDistribution: priorityData,
+    totalIncidents: Math.floor(Math.random() * 300 + 500),
+    resolvedIncidents: Math.floor(Math.random() * 250 + 400),
+    averageResponseTime: Math.floor(Math.random() * 20 + 10)
+  };
 };

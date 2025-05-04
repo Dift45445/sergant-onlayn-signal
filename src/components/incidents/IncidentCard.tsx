@@ -3,20 +3,22 @@ import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Incident, Priority } from '@/types/incident';
+import { Incident, IncidentStatus, Priority } from '@/types/incident';
 import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
 interface IncidentCardProps {
   incident: Incident;
-  onStatusChange?: (incidentId: string, newStatus: string) => void;
+  onStatusChange?: (incidentId: string, newStatus: IncidentStatus) => void;
   isArchive?: boolean;
+  onClick?: () => void;
 }
 
 const IncidentCard: React.FC<IncidentCardProps> = ({ 
   incident, 
   onStatusChange,
-  isArchive = false
+  isArchive = false,
+  onClick
 }) => {
   const priorityColor = {
     [Priority.HIGH]: "bg-red-500",
@@ -28,10 +30,17 @@ const IncidentCard: React.FC<IncidentCardProps> = ({
     return formatDistanceToNow(new Date(dateString), { addSuffix: true, locale: ru });
   };
 
+  const handleClick = () => {
+    if (onClick) onClick();
+  };
+
   return (
-    <Card className="overflow-hidden border-l-4 animate-in fade-in slide-in-from-bottom-5 duration-500" 
+    <Card 
+      className="overflow-hidden border-l-4 animate-in fade-in slide-in-from-bottom-5 duration-500 cursor-pointer hover:shadow-md transition-shadow" 
       style={{ borderLeftColor: incident.priority === Priority.HIGH ? '#ef4444' : 
-                              incident.priority === Priority.MEDIUM ? '#eab308' : '#22c55e' }}>
+                              incident.priority === Priority.MEDIUM ? '#eab308' : '#22c55e' }}
+      onClick={handleClick}
+    >
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div>
@@ -49,7 +58,7 @@ const IncidentCard: React.FC<IncidentCardProps> = ({
         </div>
       </CardHeader>
       <CardContent>
-        <p className="text-sm mb-2">{incident.description}</p>
+        <p className="text-sm mb-2 line-clamp-2">{incident.description}</p>
         
         {incident.caller && (
           <div className="text-xs text-muted-foreground mt-2">
@@ -68,13 +77,19 @@ const IncidentCard: React.FC<IncidentCardProps> = ({
             <Button 
               size="sm" 
               variant="outline"
-              onClick={() => onStatusChange(incident.id, "IN_PROGRESS")}
+              onClick={(e) => {
+                e.stopPropagation();
+                onStatusChange(incident.id, IncidentStatus.IN_PROGRESS);
+              }}
             >
               Взять в работу
             </Button>
             <Button 
               size="sm"
-              onClick={() => onStatusChange(incident.id, "RESOLVED")}
+              onClick={(e) => {
+                e.stopPropagation();
+                onStatusChange(incident.id, IncidentStatus.RESOLVED);
+              }}
             >
               Завершить
             </Button>

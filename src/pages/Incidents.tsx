@@ -1,15 +1,19 @@
 
 import React, { useEffect, useState } from 'react';
 import { toast } from "sonner";
-import { Incident, IncidentStatus } from '@/types/incident';
-import { webSocketService, getInitialIncidents } from '@/services/incidentService';
+import { Incident, IncidentStatus, IncidentType, Priority } from '@/types/incident';
+import { webSocketService, getInitialIncidents, CrewType, IncidentWithCrew } from '@/services/incidentService';
 import IncidentCard from '@/components/incidents/IncidentCard';
 import { Button } from '@/components/ui/button';
-import { Bell, BellOff } from 'lucide-react';
+import { Bell, BellOff, Plus } from 'lucide-react';
+import IncidentDetails from '@/components/incidents/IncidentDetails';
+import CreateIncidentDialog from '@/components/incidents/CreateIncidentDialog';
 
 const Incidents: React.FC = () => {
-  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [incidents, setIncidents] = useState<IncidentWithCrew[]>([]);
   const [connected, setConnected] = useState(false);
+  const [selectedIncident, setSelectedIncident] = useState<IncidentWithCrew | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   useEffect(() => {
     // Load initial incidents
@@ -27,7 +31,7 @@ const Incidents: React.FC = () => {
   const connect = () => {
     // Add incident listener
     const unsubscribe = webSocketService.addListener((newIncident) => {
-      setIncidents(prev => [newIncident, ...prev]);
+      setIncidents(prev => [newIncident as IncidentWithCrew, ...prev]);
     });
     
     // Connect to service
@@ -50,23 +54,43 @@ const Incidents: React.FC = () => {
     }
   };
 
-  const handleStatusChange = (incidentId: string, newStatus: string) => {
+  const handleStatusChange = (incidentId: string, newStatus: IncidentStatus, crew?: CrewType) => {
     setIncidents(prev => prev.map(incident => {
       if (incident.id === incidentId) {
         const updatedIncident = { 
           ...incident, 
-          status: newStatus as IncidentStatus 
+          status: newStatus,
+          assignedCrew: crew || incident.assignedCrew
         };
         
         // Show toast for status change
+        let statusText = "Обновлен";
+        if (newStatus === IncidentStatus.IN_PROGRESS) statusText = "В обработке";
+        if (newStatus === IncidentStatus.RESOLVED) statusText = "Завершено";
+        if (newStatus === IncidentStatus.ARCHIVED) statusText = "В архиве";
+        
         toast.success(`Статус обновлен: ${updatedIncident.type}`, {
-          description: `${incident.location} - ${newStatus === "IN_PROGRESS" ? "В обработке" : "Завершено"}`
+          description: `${incident.location} - ${statusText}`
         });
         
         return updatedIncident;
       }
       return incident;
     }));
+    
+    // Close details modal if incident status changed to RESOLVED
+    if (newStatus === IncidentStatus.RESOLVED && selectedIncident?.id === incidentId) {
+      setSelectedIncident(null);
+    }
+  };
+
+  const handleCreateIncident = (newIncident: IncidentWithCrew) => {
+    const createdIncident = webSocketService.addIncident(newIncident) as IncidentWithCrew;
+    setIncidents(prev => [createdIncident, ...prev]);
+    toast.success("Вызов создан", {
+      description: `${createdIncident.type} - ${createdIncident.location}`
+    });
+    setIsCreateDialogOpen(false);
   };
 
   // Filter out archived incidents
@@ -79,23 +103,33 @@ const Incidents: React.FC = () => {
           <h1 className="text-2xl font-bold">Инциденты</h1>
           <p className="text-muted-foreground">Мониторинг происшествий в реальном времени</p>
         </div>
-        <Button 
-          onClick={toggleConnection}
-          variant={connected ? "default" : "outline"}
-          className="flex items-center gap-2"
-        >
-          {connected ? (
-            <>
-              <Bell className="h-4 w-4" />
-              Онлайн
-            </>
-          ) : (
-            <>
-              <BellOff className="h-4 w-4" />
-              Офлайн
-            </>
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => setIsCreateDialogOpen(true)}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Создать вызов
+          </Button>
+          <Button 
+            onClick={toggleConnection}
+            variant={connected ? "default" : "outline"}
+            className="flex items-center gap-2"
+          >
+            {connected ? (
+              <>
+                <Bell className="h-4 w-4" />
+                Онлайн
+              </>
+            ) : (
+              <>
+                <BellOff className="h-4 w-4" />
+                Офлайн
+              </>
+            )}
+          </Button>
+        </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -105,6 +139,7 @@ const Incidents: React.FC = () => {
               key={incident.id} 
               incident={incident}
               onStatusChange={handleStatusChange}
+              onClick={() => setSelectedIncident(incident)}
             />
           ))
         ) : (
@@ -113,6 +148,20 @@ const Incidents: React.FC = () => {
           </div>
         )}
       </div>
+
+      {selectedIncident && (
+        <IncidentDetails 
+          incident={selectedIncident} 
+          onClose={() => setSelectedIncident(null)} 
+          onStatusChange={handleStatusChange}
+        />
+      )}
+      
+      <CreateIncidentDialog 
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        onSubmit={handleCreateIncident}
+      />
     </div>
   );
 };
