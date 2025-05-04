@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { Incident, IncidentStatus, IncidentType, Priority } from "@/types/incident";
 
@@ -35,22 +34,25 @@ class WebSocketService {
   }
 
   private startMockIncidents() {
-    // Generate random incidents every 30-60 seconds (reduced frequency)
+    // Generate random incidents every 60-120 seconds (reduced frequency)
     const generateIncident = () => {
       const incident = this.createRandomIncident();
       console.log("New incident received", incident);
-      toast.info("Новый инцидент", {
-        description: `${incident.type} - ${incident.location}`,
-      });
+      // Only toast for high priority incidents
+      if (incident.priority === Priority.HIGH) {
+        toast.info("Новый срочный инцидент", {
+          description: `${incident.type} - ${incident.location}`,
+        });
+      }
       this.notifyListeners(incident);
 
       // Schedule next incident with reduced frequency
-      const nextTime = 30000 + Math.random() * 30000;
+      const nextTime = 60000 + Math.random() * 60000; // 60-120 seconds
       setTimeout(generateIncident, nextTime);
     };
 
-    // Initial incident after 5 seconds
-    setTimeout(generateIncident, 5000);
+    // Initial incident after 15 seconds
+    setTimeout(generateIncident, 15000);
   }
 
   private createRandomIncident(): Incident {

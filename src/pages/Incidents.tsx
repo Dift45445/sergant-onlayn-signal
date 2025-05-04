@@ -5,9 +5,10 @@ import { Incident, IncidentStatus, IncidentType, Priority } from '@/types/incide
 import { webSocketService, getInitialIncidents, CrewType, IncidentWithCrew } from '@/services/incidentService';
 import IncidentCard from '@/components/incidents/IncidentCard';
 import { Button } from '@/components/ui/button';
-import { Bell, BellOff, Plus } from 'lucide-react';
+import { Bell, BellOff, FileText, Plus } from 'lucide-react';
 import IncidentDetails from '@/components/incidents/IncidentDetails';
 import CreateIncidentDialog from '@/components/incidents/CreateIncidentDialog';
+import UserInfo from '@/components/user/UserInfo';
 
 const Incidents: React.FC = () => {
   const [incidents, setIncidents] = useState<IncidentWithCrew[]>([]);
@@ -103,15 +104,8 @@ const Incidents: React.FC = () => {
           <h1 className="text-2xl font-bold">Инциденты</h1>
           <p className="text-muted-foreground">Мониторинг происшествий в реальном времени</p>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            onClick={() => setIsCreateDialogOpen(true)}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Создать вызов
-          </Button>
+        <div className="flex items-center gap-2">
+          <UserInfo />
           <Button 
             onClick={toggleConnection}
             variant={connected ? "default" : "outline"}
@@ -130,6 +124,24 @@ const Incidents: React.FC = () => {
             )}
           </Button>
         </div>
+      </div>
+      
+      <div className="flex justify-between items-center mb-4">
+        <Button 
+          onClick={() => setIsCreateDialogOpen(true)}
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Создать вызов
+        </Button>
+        <Button 
+          variant="outline" 
+          onClick={() => window.location.href = '/analytics'}
+          className="flex items-center gap-2"
+        >
+          <FileText className="h-4 w-4" />
+          Дневная аналитика
+        </Button>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
